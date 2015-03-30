@@ -21,3 +21,9 @@
  */
 
 $string['pluginname'] = 'Alfresco SOP';
+$string['wslog_description'] = 'logging details about changes made to the course by the web services (WS)';
+$string['sopversion_description'] = 'contains SOP document version per client defined standard';
+$string['wsupdatedate_description'] = 'the date/time on which the WS last made changes to this course';
+$string['wscreatedate_description'] = 'the date/time on which the course was created via WS or bulk import, can be used in Totara Reports';
+$string['issop_description'] = 'A checkbox indicating that the course/certification is used for integration with Alfresco SOP';
+$string['certificationurl_description'] = 'A link to the associated certification URL for the course';

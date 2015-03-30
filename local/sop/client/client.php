@@ -21,7 +21,7 @@ $token = required_param('token', PARAM_USERNAME);
 $functionname = required_param('function', PARAM_TEXT);
 
 if ($functionname == 'newsop') {
-    $functionname = 'core_course_create_courses';
+    $functionname = 'local_sop_create_courses';
     $fullname = required_param('fullname', PARAM_TEXT);
     $shortname = required_param('shortname', PARAM_TEXT);
     $idnumber = required_param('idnumber', PARAM_ALPHANUM);
@@ -35,6 +35,8 @@ if ($functionname == 'newsop') {
     $course->summary = 'testemail1@moodle.com';
     $course->idnumber = $idnumber;
     $course->lang = 'en';
+    $course->customfield_sopversion = required_param('sopversion', PARAM_ALPHANUM);
+    $course->customfield_issop = 1;
 }
 $restformat = required_param('format', PARAM_TEXT);
 

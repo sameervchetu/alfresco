@@ -21,9 +21,9 @@
  */
 // We defined the web service functions to install.
 $functions = array(
-    'local_sop_new_sop' => array(
+    'local_sop_create_courses' => array(
         'classname' => 'local_sop_external',
-        'methodname' => 'new_sop',
+        'methodname' => 'create_courses',
         'classpath' => 'local/sop/externallib.php',
         'description' => 'Create new SOP course',
         'type' => 'write',
@@ -34,7 +34,7 @@ $functions = array(
 $services = array(
     'Alfresco SOP service' => array(
         'functions' => array(
-            'local_sop_new_sop',
+            'local_sop_create_courses',
             'core_user_create_users',
             'core_course_create_courses',
         ),
