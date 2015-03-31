@@ -31,8 +31,7 @@ if ($functionname == 'newsop') {
     $course->fullname = $fullname;
     $course->shortname = $shortname;
     $course->categoryid = 1;
-    $course->idnumber = 'testlastname1';
-    $course->summary = 'testemail1@moodle.com';
+    $course->summary = 'Test course from web service';
     $course->idnumber = $idnumber;
     $course->lang = 'en';
     $course->customfield_sopversion = required_param('sopversion', PARAM_RAW_TRIMMED);
