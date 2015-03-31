@@ -30,7 +30,7 @@ class local_sop_external extends external_api {
      * @return external_function_parameters
      * @since Moodle 2.2
      */
-    public static function create_courses_parameters() {
+    public static function create_sop_parameters() {
         $courseconfig = get_config('moodlecourse'); //needed for many default values
         return new external_function_parameters(
             array(
@@ -98,7 +98,7 @@ class local_sop_external extends external_api {
                             'customfield_issop' => new external_value(PARAM_TEXT, 'is sop course'),
                             'customfield_certificationurl' => new external_value(PARAM_TEXT, 'sop certification url course'),
                         )
-                    ), 'courses to create'
+                    ), 'SOP to create'
                 )
             )
         );
@@ -111,12 +111,12 @@ class local_sop_external extends external_api {
      * @return array courses (id and shortname only)
      * @since Moodle 2.2
      */
-    public static function create_courses($courses) {
+    public static function create_sop($courses) {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/course/lib.php");
         require_once($CFG->libdir . '/completionlib.php');
 
-        $params = self::validate_parameters(self::create_courses_parameters(),
+        $params = self::validate_parameters(self::create_sop_parameters(),
                         array('courses' => $courses));
 
         $availablethemes = core_component::get_plugin_list('theme');
@@ -196,7 +196,7 @@ class local_sop_external extends external_api {
             create_mod($data);
             create_certificate($newdata);
 
-            $resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname']);
+            $resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname'], 'status' => 'SOP created successfully');
         }
 
         $transaction->allow_commit();
@@ -210,12 +210,70 @@ class local_sop_external extends external_api {
      * @return external_description
      * @since Moodle 2.2
      */
-    public static function create_courses_returns() {
+    public static function create_sop_returns() {
         return new external_multiple_structure(
             new external_single_structure(
                 array(
                     'id'       => new external_value(PARAM_INT, 'course id'),
                     'shortname' => new external_value(PARAM_TEXT, 'short name'),
+                    'status' => new external_value(PARAM_TEXT, 'status'),
+                )
+            )
+        );
+    }
+    
+    
+    public static function update_sop_parameters() {
+        return new external_function_parameters(
+            array(
+                'courses' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'idnumber' => new external_value(PARAM_INT, 'course id number'),
+                            'customfield_certificationurl' => new external_value(PARAM_TEXT, 'sop certification url course'),
+                        )
+                    ), 'SOP to update'
+                )
+            )
+        );
+    }
+
+    public static function update_sop($courses) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . "/course/lib.php");
+        require_once($CFG->libdir . '/completionlib.php');
+
+        $params = self::validate_parameters(self::update_sop_parameters(),
+                        array('courses' => $courses));
+        foreach ($params['courses'] as $course) {
+            if(!$coursedata = $DB->get_record('course', array('idnumber' => $course['idnumber']))) {
+                
+            }
+            $newcourse = new stdClass();
+            $newcourse = (object) $course;
+            $newcourse->id = $coursedata->id;
+            $transaction = $DB->start_delegated_transaction();
+            update_course($newcourse);
+            require_once($CFG->dirroot.'/totara/customfield/fieldlib.php');
+            customfield_save_data($newcourse, 'course', 'course');
+            $transaction->allow_commit();
+            $resultcourses[] = array('id' => $coursedata->id, 'status' => 'SOP updated successfully');
+        }
+        return $resultcourses;
+    }
+
+    /**
+     * Returns description of method result value
+     *
+     * @return external_description
+     * @since Moodle 2.2
+     */
+    public static function update_sop_returns() {
+        return new external_multiple_structure(
+                new external_single_structure(
+                array(
+                    'id' => new external_value(PARAM_INT, 'course id'),
+                    'status' => new external_value(PARAM_TEXT, 'status'),
                 )
             )
         );

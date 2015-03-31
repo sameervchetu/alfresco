@@ -20,23 +20,27 @@ global $CFG;
 $token = required_param('token', PARAM_USERNAME);
 $functionname = required_param('function', PARAM_TEXT);
 
-if ($functionname == 'newsop') {
-    $functionname = 'local_sop_create_courses';
+$idnumber = required_param('idnumber', PARAM_ALPHANUM);
+$certurl = required_param('certificateurl', PARAM_URL);
+$course = new stdClass();
+$course->idnumber = $idnumber;
+$course->customfield_certificationurl = $certurl;
+
+if ($functionname == 'createsop') {
+    $functionname = 'local_sop_create_sop';
     $fullname = required_param('fullname', PARAM_TEXT);
     $shortname = required_param('shortname', PARAM_TEXT);
-    $idnumber = required_param('idnumber', PARAM_ALPHANUM);
 
     /// PARAMETERS - NEED TO BE CHANGED IF YOU CALL A DIFFERENT FUNCTION
-    $course = new stdClass();
     $course->fullname = $fullname;
     $course->shortname = $shortname;
     $course->categoryid = 1;
     $course->summary = 'Test course from web service';
-    $course->idnumber = $idnumber;
     $course->lang = 'en';
     $course->customfield_sopversion = required_param('sopversion', PARAM_RAW_TRIMMED);
     $course->customfield_issop = 1;
-    $course->customfield_certificationurl = required_param('certificateurl', PARAM_URL);
+} else if ($functionname == 'updatesop') {
+    $functionname = 'local_sop_update_sop';
 }
 $restformat = required_param('format', PARAM_TEXT);
 
