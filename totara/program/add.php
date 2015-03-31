@@ -156,6 +156,7 @@ if ($iscertif) {
 
 // Handle form submit
 if ($data = $form->get_data()) {
+    echo'<pre>';print_r($data);die;
 
     if (isset($data->savechanges)) {
 

@@ -35,8 +35,9 @@ if ($functionname == 'newsop') {
     $course->summary = 'testemail1@moodle.com';
     $course->idnumber = $idnumber;
     $course->lang = 'en';
-    $course->customfield_sopversion = required_param('sopversion', PARAM_ALPHANUM);
+    $course->customfield_sopversion = required_param('sopversion', PARAM_RAW_TRIMMED);
     $course->customfield_issop = 1;
+    $course->customfield_certificationurl = required_param('certificateurl', PARAM_URL);
 }
 $restformat = required_param('format', PARAM_TEXT);
 

@@ -96,6 +96,7 @@ class local_sop_external extends external_api {
                                     'additional options for particular course format', VALUE_OPTIONAL),
                             'customfield_sopversion' => new external_value(PARAM_TEXT, 'sopversion'),
                             'customfield_issop' => new external_value(PARAM_TEXT, 'is sop course'),
+                            'customfield_certificationurl' => new external_value(PARAM_TEXT, 'sop certification url course'),
                         )
                     ), 'courses to create'
                 )
@@ -185,11 +186,15 @@ class local_sop_external extends external_api {
             }
 
             //Note: create_course() core function check shortname, idnumber, category
-            $data = (object) $course;
+            $newdata = (object) $course;
             $course['id'] = create_course((object) $course)->id;
             require_once($CFG->dirroot.'/totara/customfield/fieldlib.php');
-            $data->id = $course['id'];
-            customfield_save_data($data, 'course', 'course');
+            $newdata->id = $course['id'];
+            customfield_save_data($newdata, 'course', 'course');
+            require_once($CFG->dirroot.'/local/sop/lib.php');
+            $data = clone($newdata);
+            create_mod($data);
+//            create_certificate($newdata);
 
             $resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname']);
         }
