@@ -276,7 +276,7 @@ if ($mform->is_cancelled()) {
         redirect(course_get_url($course, $cw->section, array('sr' => $sectionreturn)));
     }
 } else if ($fromform = $mform->get_data()) {
-echo'<pre>';print_r($fromform);die;
+    
     if (!empty($fromform->update)) {
         list($cm, $fromform) = update_moduleinfo($cm, $fromform, $course, $mform);
     } else if (!empty($fromform->add)) {
