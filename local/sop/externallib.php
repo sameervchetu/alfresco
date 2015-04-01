@@ -194,7 +194,8 @@ class local_sop_external extends external_api {
             require_once($CFG->dirroot.'/local/sop/lib.php');
             $data = clone($newdata);
             create_mod($data);
-            create_certificate($newdata);
+            $programid = create_certificate($newdata);
+            save_set($programid, $course['id']);
 
             $resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname'], 'status' => 'SOP created successfully');
         }

@@ -145,7 +145,7 @@ function create_certificate($newdata, $editoroptions = NULL) {
         add_to_log(SITEID, 'certification', 'created', "edit.php?id={$newid}", '');
     }
     prog_fix_program_sortorder($newdata->category);
-    return;
+    return $newdata->id;
 }
 
 function create_mod($data) {
@@ -170,3 +170,77 @@ function create_mod($data) {
     $mod = add_moduleinfo($data, $course);
     return;
 }
+
+
+ function save_courses($csid, $courseid) {
+        global $DB, $CFG;
+        if (!$csid) {
+            return false;
+        }
+
+        // first get program enrolment plugin class
+        require_once($CFG->libdir."/enrollib.php");
+        $program_plugin = enrol_get_plugin('totara_program');
+        
+        // then delete any courses from the database that have been marked for deletion
+//        foreach ($this->courses_deleted_ids as $courseid) {
+//            if ($courseset_course = $DB->get_record('prog_courseset_course',
+//                            array('coursesetid' => $this->id, 'courseid' => $courseid))) {
+//                $DB->delete_records('prog_courseset_course', array('coursesetid' => $id, 'courseid' => $courseid));
+//            }
+//        }
+//
+//        //if the course no longer exists in any programs, remove the program enrolment plugin
+//        $courses_still_associated = prog_get_courses_associated_with_programs($this->courses_deleted_ids);
+//        $courses_to_remove_plugin_from = array_diff($this->courses_deleted_ids, array_keys($courses_still_associated));
+//        foreach ($courses_to_remove_plugin_from as $courseid) {
+//            $instance = $program_plugin->get_instance_for_course($courseid);
+//            if ($instance) {
+//                $program_plugin->delete_instance($instance);
+//            }
+//        }
+
+
+        // then add any new courses
+//        foreach ($this->courses as $course) {
+            if (!$ob = $DB->get_record('prog_courseset_course', array('coursesetid' => $csid, 'courseid' => $courseid))) {
+                
+                //check if program enrolment plugin is already enabled on this course
+                require_once("$CFG->dirroot/enrol/totara_program/lib.php");
+                $instance = $program_plugin->get_instance_for_course($courseid);
+                if (!$instance) {
+                    
+                    //add it
+                    $course = $DB-get_record('coruses', array('id' => $courseid));
+                    $program_plugin->add_instance($course);
+                }
+                $ob = new stdClass();
+                $ob->coursesetid = $csid;
+                $ob->courseid = $courseid;
+                $DB->insert_record('prog_courseset_course', $ob);
+//            }
+        }
+        return true;
+    }
+    
+     function save_set($programid, $courseid) {
+        global $DB;
+
+        $todb = new stdClass();
+        $todb->programid = $programid;
+        $todb->sortorder = 3;
+        $todb->competencyid = 0;
+        $todb->nextsetoperator = 0;
+        $todb->completiontype = 1;
+        $todb->timeallowed = 86400;
+        $todb->recurrencetime = 0;
+        $todb->recurcreatetime = 0;
+        $todb->contenttype = 1;
+        $todb->label = 'Course set 1';
+        $todb->certifpath = 1;
+
+        
+        $id = $DB->insert_record('prog_courseset', $todb);
+
+        return save_courses($id, $courseid);
+    }
