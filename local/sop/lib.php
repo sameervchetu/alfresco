@@ -20,7 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+/**
+ * To create the certification program through webservice
+ *
+ * @param object $newdata details of the certification program
+ * @param optional param $editoroptions
+ * @return integer $id id of the created certificate
+ */
 function create_certificate($newdata, $editoroptions = NULL) {
     require_once( '../../config.php');
     global $CFG;
@@ -67,10 +73,10 @@ function create_certificate($newdata, $editoroptions = NULL) {
     $newid = 0;
 
     $transaction = $DB->start_delegated_transaction();
-    
+
     // Set up the program
     $newid = $DB->insert_record('prog', $cert_todb);
-    
+
     $program = new program($newid);
     $transaction->allow_commit();
 
@@ -148,8 +154,15 @@ function create_certificate($newdata, $editoroptions = NULL) {
     return $newdata->id;
 }
 
+/**
+ * To create the URL activity in course created through web serivce 
+ *
+ * @param object $data details of the course and url
+ * @return void
+ */
 function create_mod($data) {
-    global $DB, $CFG;;
+    global $DB, $CFG;
+    ;
     $data->name = $data->fullname;
     $data->externalurl = $data->customfield_certificationurl;
     $data->introeditor = array('text' => '', 'format' => 1);
@@ -171,54 +184,68 @@ function create_mod($data) {
     return;
 }
 
-
- function save_courses($csid, $courseid) {
-        global $DB, $CFG;
-        if (!$csid) {
-            return false;
-        }
-
-        // first get program enrolment plugin class
-        require_once($CFG->libdir."/enrollib.php");
-        $program_plugin = enrol_get_plugin('totara_program');
-        
-            if (!$ob = $DB->get_record('prog_courseset_course', array('coursesetid' => $csid, 'courseid' => $courseid))) {
-                
-                //check if program enrolment plugin is already enabled on this course
-                require_once("$CFG->dirroot/enrol/totara_program/lib.php");
-                $instance = $program_plugin->get_instance_for_course($courseid);
-                if (!$instance) {
-                    
-                    //add it
-                    $course = $DB-get_record('coruses', array('id' => $courseid));
-                    $program_plugin->add_instance($course);
-                }
-                $ob = new stdClass();
-                $ob->coursesetid = $csid;
-                $ob->courseid = $courseid;
-                $DB->insert_record('prog_courseset_course', $ob);
-        }
-        return true;
+/**
+ * Assign created course to certification content 
+ *
+ * @param int $csid Id of the certification program
+ * @param int $courseid Id of the course to be assigned in the certification program
+ * @return bool
+ */
+function save_courses($csid, $courseid) {
+    global $DB, $CFG;
+    if (!$csid) {
+        return false;
     }
-    
-     function save_set($programid, $courseid) {
-        global $DB;
 
-        $todb = new stdClass();
-        $todb->programid = $programid;
-        $todb->sortorder = 3;
-        $todb->competencyid = 0;
-        $todb->nextsetoperator = 0;
-        $todb->completiontype = 1;
-        $todb->timeallowed = 86400;
-        $todb->recurrencetime = 0;
-        $todb->recurcreatetime = 0;
-        $todb->contenttype = 1;
-        $todb->label = 'Course set 1';
-        $todb->certifpath = 1;
+    // first get program enrolment plugin class
+    require_once($CFG->libdir . "/enrollib.php");
+    $program_plugin = enrol_get_plugin('totara_program');
 
-        
-        $id = $DB->insert_record('prog_courseset', $todb);
+    if (!$ob = $DB->get_record('prog_courseset_course', array('coursesetid' => $csid, 'courseid' => $courseid))) {
 
-        return save_courses($id, $courseid);
+        //check if program enrolment plugin is already enabled on this course
+        require_once("$CFG->dirroot/enrol/totara_program/lib.php");
+        $instance = $program_plugin->get_instance_for_course($courseid);
+        if (!$instance) {
+
+            //add it
+            $course = $DB - get_record('coruses', array('id' => $courseid));
+            $program_plugin->add_instance($course);
+        }
+        $ob = new stdClass();
+        $ob->coursesetid = $csid;
+        $ob->courseid = $courseid;
+        $DB->insert_record('prog_courseset_course', $ob);
     }
+    return true;
+}
+
+/**
+ * Create the course set in certification program
+ *
+ * @param int $programid Id of the certification program
+ * @param int $courseid Id of the course to be assigned in the certification program
+ * @return bool
+ */
+
+function save_set($programid, $courseid) {
+    global $DB;
+
+    $todb = new stdClass();
+    $todb->programid = $programid;
+    $todb->sortorder = 3;
+    $todb->competencyid = 0;
+    $todb->nextsetoperator = 0;
+    $todb->completiontype = 1;
+    $todb->timeallowed = 86400;
+    $todb->recurrencetime = 0;
+    $todb->recurcreatetime = 0;
+    $todb->contenttype = 1;
+    $todb->label = 'Course set 1';
+    $todb->certifpath = 1;
+
+
+    $id = $DB->insert_record('prog_courseset', $todb);
+
+    return save_courses($id, $courseid);
+}
