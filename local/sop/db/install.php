@@ -95,4 +95,39 @@ function xmldb_local_sop_install() {
 
         $obj->define_save($customfield, 'course');
     }
+    
+    //Create the web service user role for creating SOP
+    $systemcontext = context_system::instance();
+    // Create new Tenant administrator role.
+    if (!$webserviceuser = $DB->get_record('role', array('shortname' => 'sopuser'))) {
+        $webserviceuserid = create_role('SOP user', 'sopuser', 'SOP user creates the course and certification through the REST web service calls ');
+    } else {
+        $webserviceuserid = $webserviceuser->id;
+    }
+    
+        // If not done already, allow assignment at system context.
+    $levels = get_role_contextlevels($webserviceuserid);
+    if (empty($levels)) {
+        $levelsys = new stdClass;
+        $levelsys->roleid = $webserviceuserid;
+        $levelsys->contextlevel = CONTEXT_SYSTEM;
+        $levelcat = new stdClass;
+        $levelcat->roleid = $webserviceuserid;
+        $levelcat->contextlevel = CONTEXT_COURSECAT;
+        $levelcou = new stdClass;
+        $levelcou->roleid = $webserviceuserid;
+        $levelcou->contextlevel = CONTEXT_COURSE;
+        $tenantlevels = array($levelsys, $levelcat, $levelcou);
+        $DB->insert_records('role_context_levels', $tenantlevels);
+    }
+    
+        // Add capabilities to the tenant administrator role.
+    $webserviceusercaps = array(
+        'block/course_list:myaddinstance',
+        'block/course_overview:myaddinstance',
+        );
+    
+        foreach ($webserviceusercaps as $cap) {
+        assign_capability($cap, CAP_ALLOW, $webserviceuserid, $systemcontext->id);
+    }
 }

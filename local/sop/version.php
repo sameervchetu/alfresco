@@ -23,6 +23,6 @@
 defined('MOODLE_INTERNAL') || DIE;
 $plugin->component = 'local_sop'; // Full name of the plugin (used for diagnostics)
 $plugin->version = 2015032300; // The current module version (Date: YYYYMMDDXX)
-$plugin->requires = 2014050800; // Requires this Moodle version
+$plugin->requires = 2013110500; // Requires this Moodle version
 $plugin->cron = 0;          // Period for cron to check this module (secs)
 

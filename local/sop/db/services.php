@@ -27,6 +27,7 @@ $functions = array(
         'classpath' => 'local/sop/externallib.php',
         'description' => 'Create new SOP',
         'type' => 'write',
+        'capabilities'=> 'moodle/course:create,moodle/course:visibility',
     ),
     'local_sop_update_sop' => array(
         'classname' => 'local_sop_external',
@@ -34,6 +35,7 @@ $functions = array(
         'classpath' => 'local/sop/externallib.php',
         'description' => 'Update existing SOP',
         'type' => 'write',
+        'capabilities'=> 'moodle/course:update,moodle/course:visibility',
     )
 );
 

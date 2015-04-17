@@ -172,6 +172,7 @@ function create_mod($data) {
     $data->popupheight = 450;
     $data->printintro = 1;
     $data->completionunlocked = 1;
+    $data->completion = 1;
     $data->completionexpected = 0;
     $data->modulename = 'url';
     $data->module = 22;
@@ -181,7 +182,7 @@ function create_mod($data) {
     require_once($CFG->dirroot . '/course/modlib.php');
     $course = $DB->get_record('course', array('id' => $data->id));
     $mod = add_moduleinfo($data, $course);
-    return;
+    return $mod->coursemodule;
 }
 
 /**
@@ -209,7 +210,7 @@ function save_courses($csid, $courseid) {
         if (!$instance) {
 
             //add it
-            $course = $DB - get_record('coruses', array('id' => $courseid));
+            $course = $DB->get_record('courses', array('id' => $courseid));
             $program_plugin->add_instance($course);
         }
         $ob = new stdClass();
@@ -248,4 +249,97 @@ function save_set($programid, $courseid) {
     $id = $DB->insert_record('prog_courseset', $todb);
 
     return save_courses($id, $courseid);
+}
+
+/**
+ * Update the url activity in course
+ *
+ * @param stdClass object $course 
+ * @param stdClass object $mod to define the data for new url
+ * @return bool
+ */
+
+function update_mod($course, $mod) {
+    global $DB, $CFG;
+    
+    if(!$modinfo = $DB->get_record('url', array('course' => $course->id))) {
+        
+    }
+    if(!$cm = $DB->get_record('course_modules', array('instance' => $modinfo->id))) {
+        
+    }
+    $cm->modname = 'url';
+    $modinfo->modulename = 'url';
+    $modinfo->externalurl = $mod->customfield_certificationurl;
+    $modinfo->coursemodule = $cm->id;
+    $modinfo->display = 1;
+    $modinfo->timemodified = time();
+    $modinfo->introeditor = array('text' => '', 'format' => 1);
+    $modinfo->visible = 1;
+    $modinfo->display = 2;
+    require_once($CFG->dirroot . '/course/modlib.php');
+    update_moduleinfo($cm, $modinfo, $course);
+    require_once($CFG->dirroot . '/totara/certification/lib.php');
+    sop_recertify_window_opens_stage();
+    
+}
+
+/**
+ * Triggered by the cron, gets all certifications that have the
+ * re-certify window due to be open and perform actions
+ *
+ * @return int Count of certification completion records
+ */
+function sop_recertify_window_opens_stage() {
+    global $DB, $CFG;
+
+    // Find any users who have reached this point.
+    $sql = "SELECT cfc.id as uniqueid, u.*, cf.id as certifid, cfc.userid, p.id as progid
+            FROM {certif_completion} cfc
+            JOIN {certif} cf on cf.id = cfc.certifid
+            JOIN {prog} p on p.certifid = cf.id
+            JOIN {user} u on u.id = cfc.userid
+                  AND cfc.status = ?
+                  AND cfc.renewalstatus = ?
+                  AND u.deleted = 0";
+
+    $results = $DB->get_records_sql($sql, array(CERTIFSTATUS_COMPLETED, CERTIFRENEWALSTATUS_NOTDUE));
+
+    require_once($CFG->dirroot.'/course/lib.php'); // Archive_course_activities().
+
+    // For each certification & user.
+    foreach ($results as $user) {
+        // Archive completion.
+        copy_certif_completion_to_hist($user->certifid, $user->id);
+
+        $courses = find_courses_for_certif($user->certifid, 'c.id, c.fullname');
+
+        // Reset course_completions, course_module_completions, program_completion records.
+        reset_certifcomponent_completions($user, $courses);
+
+        // Set the renewal status of the certification/program to due for renewal.
+        $DB->set_field('certif_completion', 'renewalstatus', CERTIFRENEWALSTATUS_DUE,
+                        array('certifid' => $user->certifid, 'userid' => $user->id));
+
+        // Sort out the messages manager.
+        if (isset($messagesmanagers[$user->progid])) {
+            // Use the existing messages manager object if it is available.
+            $messagesmanager = $messagesmanagers[$user->progid];
+        } else {
+            // Create a new messages manager object and store it if it has not already been instantiated.
+            $messagesmanager = new prog_messages_manager($user->progid);
+            $messagesmanagers[$user->progid] = $messagesmanager;
+        }
+
+        $messages = $messagesmanager->get_messages();
+
+        foreach ($messages as $message) {
+            if ($message->messagetype == MESSAGETYPE_RECERT_WINDOWOPEN) {
+                // This function checks prog_messagelog for existing record. If it exists, the message is not sent.
+                $message->send_message($user);
+            }
+        }
+    }
+
+    return count($results);
 }

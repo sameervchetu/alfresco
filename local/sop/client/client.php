@@ -14,19 +14,16 @@
  * @authorr Jerome Mouneyrac
  */
 /// SETUP - NEED TO BE CHANGED
-require_once ('../../../config.php');
-global $CFG;
+require_once ('..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'config.php');
+global $CFG, $DB;
 
 $token = required_param('token', PARAM_USERNAME);
-$functionname = required_param('function', PARAM_TEXT);
 
-$idnumber = required_param('idnumber', PARAM_ALPHANUM);
-$certurl = required_param('certificateurl', PARAM_URL);
 $course = new stdClass();
-$course->idnumber = $idnumber;
-$course->customfield_certificationurl = $certurl;
+$course->idnumber = required_param('idnumber', PARAM_ALPHANUM);
+$course->customfield_certificationurl = required_param('certificateurl', PARAM_URL);
 
-if ($functionname == 'createsop') {
+if (!$exist = $DB->get_record('course', array('idnumber' => $course->idnumber), 'id, fullname')) {
     $functionname = 'local_sop_create_sop';
     $fullname = required_param('fullname', PARAM_TEXT);
     $shortname = required_param('shortname', PARAM_TEXT);
@@ -39,14 +36,12 @@ if ($functionname == 'createsop') {
     $course->lang = 'en';
     $course->customfield_sopversion = required_param('sopversion', PARAM_RAW_TRIMMED);
     $course->customfield_issop = 1;
-} else if ($functionname == 'updatesop') {
+} else {
     $functionname = 'local_sop_update_sop';
 }
 $restformat = required_param('format', PARAM_TEXT);
 
-$domainname = 'http://alfresco.local';
-
-
+$domainname = $CFG->wwwroot;
 
 $courses = array($course);
 $params = array('courses' => $courses);

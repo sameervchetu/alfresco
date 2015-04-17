@@ -188,15 +188,32 @@ class local_sop_external extends external_api {
             //Note: create_course() core function check shortname, idnumber, category
             $newdata = (object) $course;
             $course['id'] = create_course((object) $course)->id;
+            
+            // Save the values of customfields for the course.
             require_once($CFG->dirroot.'/totara/customfield/fieldlib.php');
             $newdata->id = $course['id'];
             customfield_save_data($newdata, 'course', 'course');
+            
+            //create new URL activity in course
             require_once($CFG->dirroot.'/local/sop/lib.php');
             $data = clone($newdata);
-            create_mod($data);
+            $cm = create_mod($data);
+            
+            // create course completion criteria
+            $comp_data = new stdClass();
+            $comp_data->criteria_activity_value[$cm] = 1;
+            $comp_data->id = $course['id'];
+            $comp_data->overall_aggregation = 1;
+            require_once($CFG->dirroot.'/completion/criteria/completion_criteria_activity.php');
+            $class = 'completion_criteria_activity';
+            $criterion = new $class();
+            $criterion->update_config($comp_data);
+            
+            // Create new certificate, courseset and assign the created course in the courseset
             $programid = create_certificate($newdata);
             save_set($programid, $course['id']);
-
+            
+            // Prepare the response data
             $resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname'], 'status' => 'SOP created successfully');
         }
 
@@ -253,8 +270,12 @@ class local_sop_external extends external_api {
             $newcourse = new stdClass();
             $newcourse = (object) $course;
             $newcourse->id = $coursedata->id;
+            $newcourse->customfield_sopversion = 2.0;
+            $newcourse->customfield_wslog_editor['text'] = 'SOP version and URL resource updated';
             $transaction = $DB->start_delegated_transaction();
             update_course($newcourse);
+            require_once($CFG->dirroot.'/local/sop/lib.php');
+            update_mod($coursedata, $newcourse);
             require_once($CFG->dirroot.'/totara/customfield/fieldlib.php');
             customfield_save_data($newcourse, 'course', 'course');
             $transaction->allow_commit();
