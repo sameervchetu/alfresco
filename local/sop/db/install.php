@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Program auto enrolment lib API file
+ * Alfresco SOP integration install file
  * 
  * @copyright Copyright 2015 eLearningExperts
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU Public License 3.0
@@ -129,5 +129,14 @@ function xmldb_local_sop_install() {
     
         foreach ($webserviceusercaps as $cap) {
         assign_capability($cap, CAP_ALLOW, $webserviceuserid, $systemcontext->id);
+    }
+    
+    $dbman = $DB->get_manager();
+
+    $table = new xmldb_table('course_completion_history');
+    $field = new xmldb_field('sopversion_completed', XMLDB_TYPE_TEXT, '10', false, false, false, 0); // You'll have to look up the definition to see what other params are needed.
+
+    if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
     }
 }

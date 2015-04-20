@@ -162,7 +162,7 @@ function create_certificate($newdata, $editoroptions = NULL) {
  */
 function create_mod($data) {
     global $DB, $CFG;
-    ;
+    
     $data->name = $data->fullname;
     $data->externalurl = $data->customfield_certificationurl;
     $data->introeditor = array('text' => '', 'format' => 1);
@@ -192,7 +192,7 @@ function create_mod($data) {
  * @param int $courseid Id of the course to be assigned in the certification program
  * @return bool
  */
-function save_courses($csid, $courseid) {
+function save_courses($csid, $courseid, $programid) {
     global $DB, $CFG;
     if (!$csid) {
         return false;
@@ -218,6 +218,10 @@ function save_courses($csid, $courseid) {
         $ob->courseid = $courseid;
         $DB->insert_record('prog_courseset_course', $ob);
     }
+    
+//    $program = new program($programid);
+//    $programcontent = $program->get_content();
+//    $programcontent->copy_coursesets_to_recert($data);
     return true;
 }
 
@@ -245,10 +249,9 @@ function save_set($programid, $courseid) {
     $todb->label = 'Course set 1';
     $todb->certifpath = 1;
 
-
     $id = $DB->insert_record('prog_courseset', $todb);
 
-    return save_courses($id, $courseid);
+    return save_courses($id, $courseid, $programid);
 }
 
 /**
@@ -276,7 +279,6 @@ function update_mod($course, $mod) {
     $modinfo->timemodified = time();
     $modinfo->introeditor = array('text' => '', 'format' => 1);
     $modinfo->visible = 1;
-    $modinfo->display = 2;
     require_once($CFG->dirroot . '/course/modlib.php');
     update_moduleinfo($cm, $modinfo, $course);
     require_once($CFG->dirroot . '/totara/certification/lib.php');
