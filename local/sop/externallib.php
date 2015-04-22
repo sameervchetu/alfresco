@@ -184,7 +184,12 @@ class local_sop_external extends external_api {
                     $course[$option['name']] = $option['value'];
                 }
             }
-
+            
+            $course['format'] = 'topics';
+            $course['numsections'] = 2;
+            $course['newsitems'] = 0;
+            $CFG->defaultblocks_override = ' ';
+            
             //Note: create_course() core function check shortname, idnumber, category
             $newdata = (object) $course;
             $course['id'] = create_course((object) $course)->id;
@@ -201,13 +206,33 @@ class local_sop_external extends external_api {
             
             // create course completion criteria
             $comp_data = new stdClass();
-            $comp_data->criteria_activity_value[$cm] = 1;
+            $comp_data->criteria_activity_value[$cm['cm_url']] = 1;
+            $comp_data->criteria_activity_value[$cm['cm_label']] = 1;
             $comp_data->id = $course['id'];
             $comp_data->overall_aggregation = 1;
+            $comp_data->activity_aggregation = 1;
             require_once($CFG->dirroot.'/completion/criteria/completion_criteria_activity.php');
             $class = 'completion_criteria_activity';
             $criterion = new $class();
             $criterion->update_config($comp_data);
+            
+            $aggdata = array(
+                'course'        => $comp_data->id,
+                'criteriatype'  => null
+            );
+            $aggregation = new completion_aggregation($aggdata);
+            $aggregation->setMethod($comp_data->overall_aggregation);
+            $aggregation->save();
+
+            // Handle activity aggregation.
+            if (empty($comp_data->activity_aggregation)) {
+            $comp_data->activity_aggregation = 0;
+            }
+
+            $aggdata['criteriatype'] = COMPLETION_CRITERIA_TYPE_ACTIVITY;
+            $aggregation = new completion_aggregation($aggdata);
+            $aggregation->setMethod($comp_data->activity_aggregation);
+            $aggregation->save();
             
             // Create new certificate, courseset and assign the created course in the courseset
             $programid = create_certificate($newdata);

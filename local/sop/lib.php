@@ -155,14 +155,15 @@ function create_certificate($newdata, $editoroptions = NULL) {
 }
 
 /**
- * To create the URL activity in course created through web serivce 
+ * To create the URL and Label activities in course created through web serivce 
  *
  * @param object $data details of the course and url
  * @return void
  */
 function create_mod($data) {
     global $DB, $CFG;
-    
+
+    //Create URL activity
     $data->name = $data->fullname;
     $data->externalurl = $data->customfield_certificationurl;
     $data->introeditor = array('text' => '', 'format' => 1);
@@ -181,8 +182,21 @@ function create_mod($data) {
 
     require_once($CFG->dirroot . '/course/modlib.php');
     $course = $DB->get_record('course', array('id' => $data->id));
-    $mod = add_moduleinfo($data, $course);
-    return $mod->coursemodule;
+    $mod_url = add_moduleinfo($data, $course);
+    $cm_url = $mod_url->coursemodule;
+
+    //Create label activity
+    $data->name = '';
+    $data->intro = 'I have read and understand';
+    $data->modulename = 'label';
+    $data->module = 14;
+    unset($data->coursemodule);
+    unset($data->instance);
+    $mod_label = add_moduleinfo($data, $course);
+    $cm_label = $mod_label->coursemodule;
+
+    $retrun_arr = array('cm_url' => $cm_url, 'cm_label' => $cm_label);
+    return $retrun_arr;
 }
 
 /**
@@ -218,7 +232,7 @@ function save_courses($csid, $courseid, $programid) {
         $ob->courseid = $courseid;
         $DB->insert_record('prog_courseset_course', $ob);
     }
-    
+
 //    $program = new program($programid);
 //    $programcontent = $program->get_content();
 //    $programcontent->copy_coursesets_to_recert($data);
@@ -232,7 +246,6 @@ function save_courses($csid, $courseid, $programid) {
  * @param int $courseid Id of the course to be assigned in the certification program
  * @return bool
  */
-
 function save_set($programid, $courseid) {
     global $DB;
 
@@ -261,14 +274,13 @@ function save_set($programid, $courseid) {
  * @param stdClass object $mod to define the data for new url
  * @return bool
  */
-
 function update_mod($course, $mod) {
     global $DB, $CFG;
-    
-    if(!$modinfo = $DB->get_record('url', array('course' => $course->id))) {
+
+    if (!$modinfo = $DB->get_record('url', array('course' => $course->id))) {
         
     }
-    if(!$cm = $DB->get_record('course_modules', array('instance' => $modinfo->id))) {
+    if (!$cm = $DB->get_record('course_modules', array('instance' => $modinfo->id))) {
         
     }
     $cm->modname = 'url';
@@ -283,7 +295,6 @@ function update_mod($course, $mod) {
     update_moduleinfo($cm, $modinfo, $course);
     require_once($CFG->dirroot . '/totara/certification/lib.php');
     sop_recertify_window_opens_stage();
-    
 }
 
 /**
@@ -307,8 +318,7 @@ function sop_recertify_window_opens_stage() {
 
     $results = $DB->get_records_sql($sql, array(CERTIFSTATUS_COMPLETED, CERTIFRENEWALSTATUS_NOTDUE));
 
-    require_once($CFG->dirroot.'/course/lib.php'); // Archive_course_activities().
-
+    require_once($CFG->dirroot . '/course/lib.php'); // Archive_course_activities().
     // For each certification & user.
     foreach ($results as $user) {
         // Archive completion.
@@ -320,8 +330,7 @@ function sop_recertify_window_opens_stage() {
         reset_certifcomponent_completions($user, $courses);
 
         // Set the renewal status of the certification/program to due for renewal.
-        $DB->set_field('certif_completion', 'renewalstatus', CERTIFRENEWALSTATUS_DUE,
-                        array('certifid' => $user->certifid, 'userid' => $user->id));
+        $DB->set_field('certif_completion', 'renewalstatus', CERTIFRENEWALSTATUS_DUE, array('certifid' => $user->certifid, 'userid' => $user->id));
 
         // Sort out the messages manager.
         if (isset($messagesmanagers[$user->progid])) {
